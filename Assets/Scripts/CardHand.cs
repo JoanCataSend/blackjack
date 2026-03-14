@@ -7,16 +7,23 @@ public class CardHand : MonoBehaviour
     public GameObject card;
     public bool isDealer = false;
     public int points;
-    private int coordY;
+    private float coordY;
+    private float startX;
 
     private void Awake()
     {
         points = 0;
 
         if (!isDealer)
-            coordY = -2;
+        {
+            coordY = -1.6f;
+            startX = -1.2f;
+        }
         else
-            coordY = 2;
+        {
+            coordY = 1.3f;
+            startX = -1.2f;
+        }
     }
 
     public void Clear()
@@ -24,9 +31,15 @@ public class CardHand : MonoBehaviour
         points = 0;
 
         if (!isDealer)
-            coordY = -2;
+        {
+            coordY = -1.6f;
+            startX = -1.2f;
+        }
         else
-            coordY = 2;
+        {
+            coordY = 1.3f;
+            startX = -1.2f;
+        }
 
         foreach (GameObject g in cards)
         {
@@ -47,7 +60,7 @@ public class CardHand : MonoBehaviour
         GameObject cardCopy = Instantiate(card);
         cards.Add(cardCopy);
 
-        float coordX = 1.4f * (cards.Count - 1);
+        float coordX = startX + 0.95f * (cards.Count - 1);
         Vector3 pos = new Vector3(coordX, coordY, 0);
         cardCopy.transform.position = pos;
 

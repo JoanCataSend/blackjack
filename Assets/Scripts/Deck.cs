@@ -155,29 +155,17 @@ public class Deck : MonoBehaviour
 
     private void CalculateProbabilities()
     {
-        if (partidaTerminada)
-        {
-            probMessage.text = "";
-            return;
-        }
-
         CardHand dealerHand = dealer.GetComponent<CardHand>();
         CardHand playerHand = player.GetComponent<CardHand>();
 
         if (dealerHand.cards.Count < 2)
-        {
-            probMessage.text = "";
             return;
-        }
 
         int playerPoints = playerHand.points;
         int cartasRestantes = 52 - cardIndex;
 
         if (cartasRestantes <= 0)
-        {
-            probMessage.text = "";
             return;
-        }
 
         int valorVisibleDealer = dealerHand.cards[1].GetComponent<CardModel>().value;
 
@@ -303,7 +291,7 @@ public class Deck : MonoBehaviour
             partidaTerminada = true;
             RevelarDealer();
             ActualizarTextoBanca();
-            probMessage.text = "";
+            CalculateProbabilities();
             return;
         }
 
@@ -348,7 +336,7 @@ public class Deck : MonoBehaviour
         ActualizarTextoBanca();
         hitButton.interactable = false;
         stickButton.interactable = false;
-        probMessage.text = "";
+        CalculateProbabilities();
     }
 
     public void PlayAgain()
@@ -407,7 +395,7 @@ public class Deck : MonoBehaviour
         {
             hitButton.interactable = false;
             stickButton.interactable = false;
-            probMessage.text = "";
+            CalculateProbabilities();
         }
     }
 
