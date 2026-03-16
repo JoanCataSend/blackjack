@@ -161,17 +161,24 @@ public class Deck : MonoBehaviour
         if (dealerHand.cards.Count < 2)
             return;
 
-        int playerPoints = playerHand.points;
-        int cartasRestantes = 52 - cardIndex;
+        int cartasRestantes = values.Length - cardIndex;
 
         if (cartasRestantes <= 0)
+        {
+            probMessage.text =
+                "Probabilidades:\n" +
+                "Dealer > Jugador: 0.0000\n" +
+                "Si pides y quedas entre 17 y 21: 0.0000\n" +
+                "Si pides y te pasas de 21: 0.0000";
             return;
+        }
 
+        int playerPoints = playerHand.points;
         int valorVisibleDealer = dealerHand.cards[1].GetComponent<CardModel>().value;
 
-        float dealerMejor = 0f;
-        float jugador17a21 = 0f;
-        float jugadorSePasa = 0f;
+        int dealerMejor = 0;
+        int jugador17a21 = 0;
+        int jugadorSePasa = 0;
 
         for (int i = cardIndex; i < values.Length; i++)
         {
@@ -179,25 +186,26 @@ public class Deck : MonoBehaviour
 
             int puntosPosiblesDealer = CalcularPuntosDosCartas(valorVisibleDealer, posibleCarta);
             if (puntosPosiblesDealer > playerPoints && puntosPosiblesDealer <= 21)
-                dealerMejor += 1f;
+                dealerMejor++;
 
             int puntosPosiblesJugador = CalcularPuntosManoMasCarta(playerHand, posibleCarta);
 
             if (puntosPosiblesJugador >= 17 && puntosPosiblesJugador <= 21)
-                jugador17a21 += 1f;
+                jugador17a21++;
 
             if (puntosPosiblesJugador > 21)
-                jugadorSePasa += 1f;
+                jugadorSePasa++;
         }
 
-        float probDealer = (dealerMejor / cartasRestantes) * 100f;
-        float prob1721 = (jugador17a21 / cartasRestantes) * 100f;
-        float probMas21 = (jugadorSePasa / cartasRestantes) * 100f;
+        float probDealer = (float)dealerMejor / cartasRestantes;
+        float prob1721 = (float)jugador17a21 / cartasRestantes;
+        float probMas21 = (float)jugadorSePasa / cartasRestantes;
 
         probMessage.text =
-            $"Dealer > Jugador: {probDealer:F2}%\n" +
-            $"17<=x<=21: {prob1721:F2}%\n" +
-            $"x>21: {probMas21:F2}%";
+            "Probabilidades:\n" +
+            $"Dealer > Jugador: {probDealer:0.0000}\n" +
+            $"Si pides y quedas entre 17 y 21: {prob1721:0.0000}\n" +
+            $"Si pides y te pasas de 21: {probMas21:0.0000}";
     }
 
     private int CalcularPuntosDosCartas(int valor1, int valor2)
