@@ -26,6 +26,7 @@ public class Deck : MonoBehaviour
     public int apuestaActual = 0;
 
     public Text textoBanca;
+    public Text textoApuesta;
     public InputField inputApuesta;
     public GameObject botonApostar;
 
@@ -41,6 +42,7 @@ public class Deck : MonoBehaviour
     {
         ShuffleCards();
         ActualizarTextoBanca();
+        ActualizarTextoApuesta();
 
         finalMessage.text = "Haz tu apuesta para comenzar.";
         probMessage.text = "";
@@ -58,7 +60,7 @@ public class Deck : MonoBehaviour
             int rango = i % 13;
 
             if (rango == 0)
-                values[i] = 1;
+                values[i] = 1; // As
             else if (rango >= 1 && rango <= 9)
                 values[i] = rango + 1;
             else
@@ -102,14 +104,17 @@ public class Deck : MonoBehaviour
 
             if (apuesta > banca)
             {
-                finalMessage.text = "Déjalo ya, no hay dinero.";
+                finalMessage.text = "No tienes suficiente dinero.";
                 return;
             }
 
             apuestaActual = apuesta;
             banca -= apuesta;
+
             ActualizarTextoBanca();
-            finalMessage.text = $"Has apostado {apuesta} euros.";
+            ActualizarTextoApuesta();
+
+            finalMessage.text = $"Has apostado {apuesta}€.";
 
             hitButton.interactable = true;
             stickButton.interactable = true;
@@ -126,6 +131,12 @@ public class Deck : MonoBehaviour
     private void ActualizarTextoBanca()
     {
         textoBanca.text = $"Banca: {banca}€";
+    }
+
+    private void ActualizarTextoApuesta()
+    {
+        if (textoApuesta != null)
+            textoApuesta.text = $"Apuesta: {apuestaActual}€";
     }
 
     void StartGame()
@@ -155,6 +166,12 @@ public class Deck : MonoBehaviour
 
     private void CalculateProbabilities()
     {
+        if (partidaTerminada)
+        {
+            probMessage.text = "";
+            return;
+        }
+
         CardHand dealerHand = dealer.GetComponent<CardHand>();
         CardHand playerHand = player.GetComponent<CardHand>();
 
@@ -177,17 +194,17 @@ public class Deck : MonoBehaviour
         {
             int posibleCarta = values[i];
 
-            int puntosPosiblesDealer = CalcularPuntosDosCartas(valorVisibleDealer, posibleCarta);
-            if (puntosPosiblesDealer > playerPoints && puntosPosiblesDealer <= 21)
-                dealerMejor += 1f;
+            int puntosDealer = CalcularPuntosDosCartas(valorVisibleDealer, posibleCarta);
+            if (puntosDealer > playerPoints && puntosDealer <= 21)
+                dealerMejor++;
 
-            int puntosPosiblesJugador = CalcularPuntosManoMasCarta(playerHand, posibleCarta);
+            int puntosJugador = CalcularPuntosManoMasCarta(playerHand, posibleCarta);
 
-            if (puntosPosiblesJugador >= 17 && puntosPosiblesJugador <= 21)
-                jugador17a21 += 1f;
+            if (puntosJugador >= 17 && puntosJugador <= 21)
+                jugador17a21++;
 
-            if (puntosPosiblesJugador > 21)
-                jugadorSePasa += 1f;
+            if (puntosJugador > 21)
+                jugadorSePasa++;
         }
 
         float probDealer = (dealerMejor / cartasRestantes) * 100f;
@@ -205,22 +222,13 @@ public class Deck : MonoBehaviour
         int suma = 0;
         int ases = 0;
 
-        if (valor1 == 1)
-            ases++;
-        else
-            suma += valor1;
-
-        if (valor2 == 1)
-            ases++;
-        else
-            suma += valor2;
+        if (valor1 == 1) ases++; else suma += valor1;
+        if (valor2 == 1) ases++; else suma += valor2;
 
         for (int i = 0; i < ases; i++)
         {
-            if (suma + 11 <= 21)
-                suma += 11;
-            else
-                suma += 1;
+            if (suma + 11 <= 21) suma += 11;
+            else suma += 1;
         }
 
         return suma;
@@ -235,23 +243,17 @@ public class Deck : MonoBehaviour
         {
             int valor = carta.GetComponent<CardModel>().value;
 
-            if (valor == 1)
-                ases++;
-            else
-                suma += valor;
+            if (valor == 1) ases++;
+            else suma += valor;
         }
 
-        if (nuevaCarta == 1)
-            ases++;
-        else
-            suma += nuevaCarta;
+        if (nuevaCarta == 1) ases++;
+        else suma += nuevaCarta;
 
         for (int i = 0; i < ases; i++)
         {
-            if (suma + 11 <= 21)
-                suma += 11;
-            else
-                suma += 1;
+            if (suma + 11 <= 21) suma += 11;
+            else suma += 1;
         }
 
         return suma;
@@ -259,7 +261,11 @@ public class Deck : MonoBehaviour
 
     void PushDealer()
     {
-        if (cardIndex >= values.Length) return;
+        if (cardIndex >= values.Length)
+        {
+            ShuffleCards();
+            cardIndex = 0;
+        }
 
         dealer.GetComponent<CardHand>().Push(faces[cardIndex], values[cardIndex]);
         cardIndex++;
@@ -267,7 +273,11 @@ public class Deck : MonoBehaviour
 
     void PushPlayer()
     {
-        if (cardIndex >= values.Length) return;
+        if (cardIndex >= values.Length)
+        {
+            ShuffleCards();
+            cardIndex = 0;
+        }
 
         player.GetComponent<CardHand>().Push(faces[cardIndex], values[cardIndex]);
         cardIndex++;
@@ -278,8 +288,7 @@ public class Deck : MonoBehaviour
 
     public void Hit()
     {
-        if (partidaTerminada)
-            return;
+        if (partidaTerminada) return;
 
         PushPlayer();
 
@@ -287,11 +296,10 @@ public class Deck : MonoBehaviour
 
         if (playerPoints > 21)
         {
-            finalMessage.text = "El jugador pierde!";
+            finalMessage.text = $"Te pasaste. Pierdes {apuestaActual}€.";
             partidaTerminada = true;
             RevelarDealer();
-            ActualizarTextoBanca();
-            CalculateProbabilities();
+            FinalizarPartida();
             return;
         }
 
@@ -300,8 +308,7 @@ public class Deck : MonoBehaviour
 
     public void Stand()
     {
-        if (partidaTerminada)
-            return;
+        if (partidaTerminada) return;
 
         RevelarDealer();
 
@@ -319,23 +326,39 @@ public class Deck : MonoBehaviour
 
         if (dealerPoints > 21 || playerPoints > dealerPoints)
         {
-            finalMessage.text = "El jugador gana!";
+            finalMessage.text = $"¡Ganaste {apuestaActual * 2}€!";
             banca += apuestaActual * 2;
         }
         else if (playerPoints < dealerPoints)
         {
-            finalMessage.text = "El dealer gana!";
+            finalMessage.text = $"Pierdes {apuestaActual}€.";
         }
         else
         {
-            finalMessage.text = "Empate!";
+            finalMessage.text = "Empate.";
             banca += apuestaActual;
         }
 
+        FinalizarPartida();
+    }
+
+    private void FinalizarPartida()
+    {
         partidaTerminada = true;
         ActualizarTextoBanca();
+        ActualizarTextoApuesta();
+
         hitButton.interactable = false;
         stickButton.interactable = false;
+
+        botonApostar.SetActive(true);
+
+        if (banca <= 0)
+        {
+            finalMessage.text = "Te has quedado sin dinero 💸";
+            botonApostar.SetActive(false);
+        }
+
         CalculateProbabilities();
     }
 
@@ -361,6 +384,8 @@ public class Deck : MonoBehaviour
 
         botonApostar.SetActive(true);
         inputApuesta.text = "";
+
+        ActualizarTextoApuesta();
     }
 
     void ComprobarBlackjack()
@@ -370,32 +395,23 @@ public class Deck : MonoBehaviour
 
         if (playerPoints == 21 && dealerPoints != 21)
         {
-            finalMessage.text = "¡Jugador tiene Blackjack!";
+            finalMessage.text = "¡Blackjack! Ganas automáticamente.";
             banca += apuestaActual * 2;
             RevelarDealer();
-            partidaTerminada = true;
+            FinalizarPartida();
         }
         else if (dealerPoints == 21 && playerPoints != 21)
         {
-            finalMessage.text = "¡Dealer tiene Blackjack!";
+            finalMessage.text = "El dealer tiene Blackjack.";
             RevelarDealer();
-            partidaTerminada = true;
+            FinalizarPartida();
         }
         else if (dealerPoints == 21 && playerPoints == 21)
         {
-            finalMessage.text = "Empate!";
+            finalMessage.text = "Empate con Blackjack.";
             banca += apuestaActual;
             RevelarDealer();
-            partidaTerminada = true;
-        }
-
-        ActualizarTextoBanca();
-
-        if (partidaTerminada)
-        {
-            hitButton.interactable = false;
-            stickButton.interactable = false;
-            CalculateProbabilities();
+            FinalizarPartida();
         }
     }
 
